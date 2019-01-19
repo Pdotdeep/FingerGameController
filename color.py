@@ -1,7 +1,6 @@
 # import the necessary packages
 from pyautogui import press
 import numpy as np
-import argparse
 import cv2
 
 from collections import deque
@@ -9,7 +8,7 @@ from imutils.video import VideoStream
 import imutils
 import time
 
-<<<<<<< HEAD
+
 # Detector functions
 def jump(pointsG , pointsR):
     minyG = 0
@@ -40,14 +39,8 @@ def jump(pointsG , pointsR):
     if (maxyR - minyR > 200) or (maxyG - minyG > 200):
         return True
         #pointsG.clear()
-=======
- 
-# construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", help = "path to the image")
-args = vars(ap.parse_args())
->>>>>>> 3759948ee7ff67740e18ddc1106a1d901fd91e72
 
+ 
 
 # define the list of boundaries
 boundaries = [
@@ -135,26 +128,13 @@ while True:
             centyR = M['m01'] / M['m00']
         break
 
-<<<<<<< HEAD
+
     if jump(pointsG , pointsR) == True:
         print("JUMP")
     # Detection checks
 
-=======
-    miny = pointsG[0][0]
-    maxy = pointsG[0][1]
 
-    for pxy in pointsG:
-        if pxy[1] < miny:
-            miny = pxy[1]
-        if pxy[1] > maxy:
-            maxy = pxy[1]
-    # print(maxy - miny)
-    if (maxy - miny > 200):
-        print("JUMP")
-	#press('up')
-        pointsG.clear()
->>>>>>> 3759948ee7ff67740e18ddc1106a1d901fd91e72
+
     # print(contour)
     # print(points)
 
@@ -177,12 +157,6 @@ if not args.get("video", False):
 	vs.stop()
 else:
 	vs.release()
-<<<<<<< HEAD
 
-
-
-=======
- 
->>>>>>> 3759948ee7ff67740e18ddc1106a1d901fd91e72
 # close all windows
 cv2.destroyAllWindows()
