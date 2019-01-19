@@ -8,11 +8,36 @@ from imutils.video import VideoStream
 import imutils
 import time
 
+# Detector functions
+def jump(pointsG , pointsR):
+    minyG = 0
+    maxyG = 0
+    minyR = 0
+    maxyR = 0
+    if len(pointsG) > 0:
+        minyG = pointsG[0][0]
+        maxyG = pointsG[0][1]
 
-# construct the argument parse and parse the arguments
-ap = argparse.ArgumentParser()
-ap.add_argument("-i", "--image", help = "path to the image")
-args = vars(ap.parse_args())
+    if len(pointsR) > 0:
+        minyR = pointsR[0][0]
+        maxyR = pointsR[0][1]
+
+    for pxy in pointsG:
+        if pxy[1] < minyG:
+            minyG = pxy[1]
+        if pxy[1] > maxyG:
+            maxyG = pxy[1]
+
+    for pxy in pointsR:
+        if pxy[1] < minyR:
+            minyR = pxy[1]
+        if pxy[1] > maxyR:
+            maxyR = pxy[1]
+    # print(maxy - miny)
+
+    if (maxyR - minyR > 200) or (maxyG - minyG > 200):
+        return True
+        #pointsG.clear()
 
 
 # define the list of boundaries
@@ -57,8 +82,10 @@ while True:
     maskR = cv2.erode(maskR, None, iterations=2)
     maskR = cv2.dilate(maskR, None, iterations=2)
 
-    centx = 0
-    centy = 0
+    centxG = 0
+    centyG = 0
+    centyR = 0
+    centxR = 0
     contoursG , h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
     contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
@@ -83,7 +110,10 @@ while True:
             break
     for contour in contoursR:
         area = cv2.contourArea(contour)
-        x,y,w,h = cv2.boundingRect(contour)
+        rect = cv2.minAreaRect(contour)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+        cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
 
         #print(len(contour[0]))
         # print(area)
@@ -96,19 +126,10 @@ while True:
             centyR = M['m01'] / M['m00']
         break
 
-    miny = pointsG[0][0]
-    maxy = pointsG[0][1]
-
-    for pxy in pointsG:
-        if pxy[1] < miny:
-            miny = pxy[1]
-        if pxy[1] > maxy:
-            maxy = pxy[1]
-    # print(maxy - miny)
-
-    # Detection checks
-    if jump() == True
+    if jump(pointsG , pointsR) == True:
         print("JUMP")
+    # Detection checks
+
     # print(contour)
     # print(points)
 
@@ -132,11 +153,7 @@ if not args.get("video", False):
 else:
 	vs.release()
 
-# Detector functions
-def jump():
-    if (maxy - miny > 200):
-        return True
-        #pointsG.clear()
+
 
 # close all windows
 cv2.destroyAllWindows()
