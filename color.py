@@ -50,6 +50,27 @@ def lean(rect):
     else:
 	return False
 
+# Check for walking requirements
+def walk():
+    switch_count = 0
+    if max(pointsG[-10][0], pointsR[-10][0]) == pointsG[-10][0]:
+        higher_colour = green
+    else:
+        higher_colour = red
+
+    for value in range(-10,-1,-1):
+        if max(pointsG[value][0], pointsR[value][0]) == pointsG[value][0]:
+            new_colour = green
+        else:
+            new_colour = red
+
+        if new_colour != higher_colour:
+            switch_count += 1
+            higher_colour = new_colour
+
+    if switch_count > 3:
+        return True
+
 
 
 # define the list of boundaries
@@ -151,7 +172,7 @@ while True:
         pointsR = []
         keyDown('up')
 	keyUp('up')
-    
+
     # Detection checks
 
     output = cv2.bitwise_and(frame, frame, mask = maskG)
