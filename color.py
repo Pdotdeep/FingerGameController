@@ -9,40 +9,44 @@ import imutils
 import time
 import math
 
+window_frame = 15
+angle_thresh = 0.45
+
 
 # Detector functions
 def jump(pointsG , pointsR):
     
     if len(pointsG) == 0 and len(pointsR) == 0 :
-    return False
+        return False
+    
     if (len(pointsG) > 0):
         minyG = pointsG[0][1]
         maxyG = pointsG[0][1]
 
 
-    for pxy in pointsG:
-        if pxy[1] < minyG:
-        minyG = pxy[1]
-        if pxy[1] > maxyG:
-        maxyG = pxy[1]
+        for pxy in pointsG:
+            if pxy[1] < minyG:
+                minyG = pxy[1]
+            if pxy[1] > maxyG:
+                maxyG = pxy[1]
 
-    if ((maxyG - minyG)> 175):
-        print ('Jump')
-        return True
+        if ((maxyG - minyG)> 175):
+            print ('Jump')
+            return True
  
     if(len(pointsR) > 0):
-    minyR = pointsR[0][1]
+        minyR = pointsR[0][1]
         maxyR = pointsR[0][1]
-    for pxy in pointsR:
-        if pxy[1] < minyR:
-        minyR = pxy[1]
-        if pxy[1] > maxyR:
-        maxyR = pxy[1]
+        for pxy in pointsR:
+            if pxy[1] < minyR:
+                minyR = pxy[1]
+            if pxy[1] > maxyR:
+                maxyR = pxy[1]
     
      
-    if ((maxyR - minyR)> 175):
-        print ('Jump')
-        return True
+        if ((maxyR - minyR)> 175):
+            print ('Jump')
+            return True
 
     return False
 
@@ -61,43 +65,44 @@ def lean(boxG, boxR):
     angleR = -1
 
     if (len(boxG) == 0 and len(boxR) == 0):
-    return False
+        return False
 
     if (len(boxG) > 0):
-    len1 = get_dist(boxG[0], boxG[1])
-    len2 = get_dist(boxG[1], boxG[2])
+        len1 = get_dist(boxG[0], boxG[1])
+        len2 = get_dist(boxG[1], boxG[2])
 
-    if (len1 > len2):
-        angleG = get_angle(boxG[0], boxG[1])
-    else:
-        angleG = get_angle(boxG[1], boxG[2])
+        if (len1 > len2):
+            angleG = get_angle(boxG[0], boxG[1])
+        else:
+            angleG = get_angle(boxG[1], boxG[2])
     
     if (len(boxR) > 0):
-    len1 = get_dist(boxR[0], boxR[1])
-    len2 = get_dist(boxR[1], boxR[2])
+        len1 = get_dist(boxR[0], boxR[1])
+        len2 = get_dist(boxR[1], boxR[2])
 
-    if (len1 > len2):
-        angleR = get_angle(boxR[0], boxR[1])
-    else:
-        angleR = get_angle(boxR[1], boxR[2])
+        if (len1 > len2):
+            angleR = get_angle(boxR[0], boxR[1])
+        else:
+            angleR = get_angle(boxR[1], boxR[2])
 
-    if (angleG > 0.3 or angleR > 0.3):
-    return False
+    if (angleG > angle_thresh and angleR > angle_thresh):
+        return False
     else:
-    return True
+        return True
 
 # Check for walking requirements
 def walk(pointsG, pointsR):
     new_color, high_color = "", ""
-    if (len(pointsG) < 15 or len(pointsR) < 15):
-    return False
+    if (len(pointsG) < window_frame or len(pointsR) < window_frame):
+        return False
+    
     switch_count = 0
-    if max(pointsG[-15][0], pointsR[-15][0]) == pointsG[-15][0]:
+    if max(pointsG[-1*window_frame][0], pointsR[-1*window_frame][0]) == pointsG[-1*window_frame][0]:
         higher_colour = 'green'
     else:
         higher_colour = 'red'
 
-    for value in range(-15,-1,1):
+    for value in range(-1*window_frame,-1,1):
         if max(pointsG[value][0], pointsR[value][0]) == pointsG[value][0]:
             new_colour = 'green'
         else:
@@ -109,7 +114,8 @@ def walk(pointsG, pointsR):
 
     if switch_count > 2:
         return True
-
+    else:
+        return False
 
 
 # define the list of boundaries
@@ -137,8 +143,6 @@ while True:
     blurred = cv2.GaussianBlur(frame, (11, 11), 0)
     frame = cv2.cvtColor(blurred, cv2.COLOR_BGR2LAB)
 
-    i = 0
-    # loop over the boundaries
 
     # create NumPy arrays from the boundaries
     lowerG = np.array([ 0, 0, 0], dtype = "uint8")
@@ -163,20 +167,16 @@ while True:
     centyG = 0
     centyR = 0
     centxR = 0
-    _, contoursG , h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
-    _, contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    contoursG , h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
+    contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contoursG:
 
         area = cv2.contourArea(contour)
-        #print("rectangle")
-        #print(rect)
-        #print(area)
         if area > 2000:
-        foundG = True
+            foundG = True
             M = cv2.moments(contour)
             if(len(pointsG) > 30):
-                #print(pointsG)
                 pointsG.pop(0)
             pointsG.append((M['m10'] / M['m00'] ,M['m01'] / M['m00'] ))
             centxG = M['m10'] / M['m00']
@@ -192,10 +192,8 @@ while True:
     for contour in contoursR:
 
         area = cv2.contourArea(contour)
-        #print(len(contour[0]))
-        # print(area)
         if area > 2000:
-        foundR = True
+            foundR = True
             M = cv2.moments(contour)
             if (len(pointsR) > 30):
                 pointsR.pop(0)
@@ -211,28 +209,28 @@ while True:
         break
 
     if (not foundG):
-    pointsG = []
+        pointsG = []
     if (not foundR):
-    pointsR = []
+        pointsR = []
 
     # Check finger gesture
 
     if walk(pointsG, pointsR) :
-    print("walk")
-    keyDown('right')
-    keyUp('right')
+        print("walk")
+        keyDown('right')
+        keyUp('right')
 
 
     elif jump(pointsG , pointsR) :
-    pointsG = []
+        pointsG = []
         pointsR = []
         keyDown('up')
-    keyUp('up')
+        keyUp('up')
 
     elif lean(boxG, boxR):
-    print("lean")
-    keyDown('left')
-    keyDown('left')
+        print("lean")
+        keyDown('left')
+        keyDown('left')
 
     output = cv2.bitwise_and(frame, frame, mask = maskG)
     output2 = cv2.bitwise_and(frame, frame, mask = maskR)
