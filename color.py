@@ -7,68 +7,106 @@ from collections import deque
 from imutils.video import VideoStream
 import imutils
 import time
+import math
 
 
 # Detector functions
 def jump(pointsG , pointsR):
-    minyG = 0
-    maxyG = 0
-    minyR = 0
-    maxyR = 0
-    if len(pointsG) > 0:
-        minyG = pointsG[0][0]
+    
+    if len(pointsG) == 0 and len(pointsR) == 0 :
+	return False
+    if (len(pointsG) > 0):
+        minyG = pointsG[0][1]
         maxyG = pointsG[0][1]
 
-    if len(pointsR) > 0:
-        minyR = pointsR[0][0]
+
+	for pxy in pointsG:
+	    if pxy[1] < minyG:
+		minyG = pxy[1]
+	    if pxy[1] > maxyG:
+		maxyG = pxy[1]
+
+	if ((maxyG - minyG)> 175):
+	    print ('Jump')
+	    return True
+ 
+    if(len(pointsR) > 0):
+	minyR = pointsR[0][1]
         maxyR = pointsR[0][1]
+	for pxy in pointsR:
+	    if pxy[1] < minyR:
+		minyR = pxy[1]
+	    if pxy[1] > maxyR:
+		maxyR = pxy[1]
+    
+     
+	if ((maxyR - minyR)> 175):
+	    print ('Jump')
+	    return True
 
-    for pxy in pointsG:
-        if pxy[1] < minyG:
-            minyG = pxy[1]
-        if pxy[1] > maxyG:
-            maxyG = pxy[1]
+    return False
 
-    for pxy in pointsR:
-        if pxy[1] < minyR:
-            minyR = pxy[1]
-        if pxy[1] > maxyR:
-            maxyR = pxy[1]
-    # print(maxy - miny)
 
-    if (maxyR - minyR > 175) or (maxyG - minyG > 175):
-        pointsG = []
-	print ('Jump')
-        return True
+def get_dist(point1, point2):
+    return (point1[0] - point2[0])**2 + (point1[1] - point2[1])**2
+
+
+def get_angle(point1, point2):
+    return math.atan(1.0 * abs(point1[1] - point2[1])/ (abs(point1[0] - point2[0]) + 0.02))
 
 # check if fingers are leaning for sideways motion
-def lean(rect):
-    print(rect[2])
-    if (abs(rect[2]) > 25 and abs(rect[2]) < 55):
-	print("lean")
-	return True
-    else:
+def lean(boxG, boxR):
+    
+    angle = -1
+
+    if (len(boxG) == 0 and len(boxR) == 0):
 	return False
 
-# Check for walking requirements
-def walk():
-    switch_count = 0
-    if max(pointsG[-10][0], pointsR[-10][0]) == pointsG[-10][0]:
-        higher_colour = green
-    else:
-        higher_colour = red
+    elif (len(boxG) > 0):
+	len1 = get_dist(boxG[0], boxG[1])
+	len2 = get_dist(boxG[1], boxG[2])
 
-    for value in range(-10,-1,-1):
+	if (len1 > len2):
+	    angle = get_angle(boxG[0], boxG[1])
+	else:
+	    angle = get_angle(boxG[1], boxG[2])
+    
+    else:
+	len1 = get_dist(boxR[0], boxR[1])
+	len2 = get_dist(boxR[1], boxR[2])
+
+	if (len1 > len2):
+	    angle = get_angle(boxR[0], boxR[1])
+	else:
+	    angle = get_angle(boxR[1], boxR[2])
+
+    if (angle == -1 or angle > 0.3):
+	return False
+    else:
+	return True
+
+# Check for walking requirements
+def walk(pointsG, pointsR):
+    new_color, high_color = "", ""
+    if (len(pointsG) < 15 or len(pointsR) < 15):
+	return False
+    switch_count = 0
+    if max(pointsG[-15][0], pointsR[-15][0]) == pointsG[-15][0]:
+        higher_colour = 'green'
+    else:
+        higher_colour = 'red'
+
+    for value in range(-15,-1,1):
         if max(pointsG[value][0], pointsR[value][0]) == pointsG[value][0]:
-            new_colour = green
+            new_colour = 'green'
         else:
-            new_colour = red
+            new_colour = 'red'
 
         if new_colour != higher_colour:
             switch_count += 1
             higher_colour = new_colour
 
-    if switch_count > 3:
+    if switch_count > 2:
         return True
 
 
@@ -89,6 +127,8 @@ time.sleep(2.0)
 pointsG = []
 pointsR = []
 
+boxR = []
+boxG = []
 
 while True:
     frame = vs.read()
@@ -106,6 +146,9 @@ while True:
     lowerR = np.array([ 0, 163, 0], dtype = "uint8")
     upperR = np.array([255, 255, 255], dtype = "uint8")
 
+    # check if any contours more than threshold area
+    foundG, foundR = False, False
+
     # find the colors within the specified boundaries and apply
     # the mask
     maskG = cv2.inRange(frame, lowerG, upperG)
@@ -119,8 +162,8 @@ while True:
     centyG = 0
     centyR = 0
     centxR = 0
-    contoursG , h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
-    contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, contoursG , h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
+    _, contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contoursG:
 
@@ -129,6 +172,7 @@ while True:
         #print(rect)
         #print(area)
         if area > 2000:
+	    foundG = True
             M = cv2.moments(contour)
             if(len(pointsG) > 30):
                 #print(pointsG)
@@ -139,13 +183,10 @@ while True:
 
 
             rect = cv2.minAreaRect(contour)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+            boxG = cv2.boxPoints(rect)
+            boxG = np.int0(boxG)
+            cv2.drawContours(frame, [boxG], 0, (0, 0, 255), 2)
 
-	    if (lean(rect)):
-		keyDown('left')
-		keyUp('left')
             break
     for contour in contoursR:
 
@@ -153,6 +194,7 @@ while True:
         #print(len(contour[0]))
         # print(area)
         if area > 2000:
+	    foundR = True
             M = cv2.moments(contour)
             if (len(pointsR) > 30):
                 pointsR.pop(0)
@@ -161,19 +203,35 @@ while True:
             centyR = M['m01'] / M['m00']
 
             rect = cv2.minAreaRect(contour)
-            box = cv2.boxPoints(rect)
-            box = np.int0(box)
-            cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
-        break
+            boxR = cv2.boxPoints(rect)
+            boxR = np.int0(boxR)
+            cv2.drawContours(frame, [boxR], 0, (0, 0, 255), 2)
+	    
+	    break
+
+    if (not foundG):
+	pointsG = []
+    if (not foundR):
+	pointsR = []
+
+    # Check finger gesture
+
+    if walk(pointsG, pointsR) :
+	print("walk")
+	keyDown('right')
+	keyUp('right')
 
 
-    if jump(pointsG , pointsR) :
-        pointsG = []
-        pointsR = []
-        keyDown('up')
+    elif jump(pointsG , pointsR) :
+	pointsG = []
+    	pointsR = []
+    	keyDown('up')
 	keyUp('up')
 
-    # Detection checks
+    elif lean(boxG, boxR):
+	print("lean")
+	keyDown('left')
+	keyDown('left')
 
     output = cv2.bitwise_and(frame, frame, mask = maskG)
     output2 = cv2.bitwise_and(frame, frame, mask = maskR)
