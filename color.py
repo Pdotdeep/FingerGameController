@@ -1,5 +1,5 @@
 # import the necessary packages
-from pyautogui import press
+from pyautogui import press, keyDown, keyUp
 import numpy as np
 import cv2
 
@@ -37,11 +37,20 @@ def jump(pointsG , pointsR):
     # print(maxy - miny)
 
     if (maxyR - minyR > 175) or (maxyG - minyG > 175):
-        pointsG.clear()
+        pointsG = []
+	print ('Jump')
         return True
-        #pointsG.clear()
 
- 
+# check if fingers are leaning for sideways motion
+def lean(rect):
+    print(rect[2])
+    if (abs(rect[2]) > 25 and abs(rect[2]) < 55):
+	print("lean")
+	return True
+    else:
+	return False
+
+
 
 # define the list of boundaries
 boundaries = [
@@ -112,6 +121,10 @@ while True:
             box = cv2.boxPoints(rect)
             box = np.int0(box)
             cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+
+	    if (lean(rect)):
+		keyDown('left')
+		keyUp('left')
             break
     for contour in contoursR:
 
@@ -133,18 +146,13 @@ while True:
         break
 
 
-    if jump(pointsG , pointsR) == True:
-        pointsG.clear()
-        pointsR.clear()
-        press('w')
-        print("JUMP")
+    if jump(pointsG , pointsR) :
+        pointsG = []
+        pointsR = []
+        keyDown('up')
+	keyUp('up')
+    
     # Detection checks
-
-
-
-    # print(contour)
-    # print(points)
-
 
     output = cv2.bitwise_and(frame, frame, mask = maskG)
     output2 = cv2.bitwise_and(frame, frame, mask = maskR)
