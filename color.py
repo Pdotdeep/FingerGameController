@@ -36,7 +36,8 @@ def jump(pointsG , pointsR):
             maxyR = pxy[1]
     # print(maxy - miny)
 
-    if (maxyR - minyR > 200) or (maxyG - minyG > 200):
+    if (maxyR - minyR > 175) or (maxyG - minyG > 175):
+        pointsG.clear()
         return True
         #pointsG.clear()
 
@@ -92,31 +93,29 @@ while True:
     contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contoursG:
-        area = cv2.contourArea(contour)
-        rect = cv2.minAreaRect(contour)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        cv2.drawContours(frame , [box] ,0 ,(0,0,255) ,2)
 
-        print("rectangle")
-        print(rect)
+        area = cv2.contourArea(contour)
+        #print("rectangle")
+        #print(rect)
         #print(area)
         if area > 2000:
             M = cv2.moments(contour)
             if(len(pointsG) > 30):
-                print(pointsG)
+                #print(pointsG)
                 pointsG.pop(0)
             pointsG.append((M['m10'] / M['m00'] ,M['m01'] / M['m00'] ))
             centxG = M['m10'] / M['m00']
             centyG = M['m01'] / M['m00']
+
+
+            rect = cv2.minAreaRect(contour)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
             break
     for contour in contoursR:
-        area = cv2.contourArea(contour)
-        rect = cv2.minAreaRect(contour)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
 
+        area = cv2.contourArea(contour)
         #print(len(contour[0]))
         # print(area)
         if area > 2000:
@@ -126,10 +125,18 @@ while True:
             pointsR.append((M['m10'] / M['m00'], M['m01'] / M['m00']))
             centxR = M['m10'] / M['m00']
             centyR = M['m01'] / M['m00']
+
+            rect = cv2.minAreaRect(contour)
+            box = cv2.boxPoints(rect)
+            box = np.int0(box)
+            cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
         break
 
 
     if jump(pointsG , pointsR) == True:
+        pointsG.clear()
+        pointsR.clear()
+        press('w')
         print("JUMP")
     # Detection checks
 
@@ -153,10 +160,8 @@ while True:
     if key == ord("q"):
         break
 
-if not args.get("video", False):
-	vs.stop()
-else:
-	vs.release()
+
+vs.release()
 
 # close all windows
 cv2.destroyAllWindows()
