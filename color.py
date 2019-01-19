@@ -1,4 +1,5 @@
 # import the necessary packages
+from pyautogui import press
 import numpy as np
 import argparse
 import cv2
@@ -8,7 +9,7 @@ from imutils.video import VideoStream
 import imutils
 import time
 
-
+ 
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", help = "path to the image")
@@ -105,10 +106,10 @@ while True:
         if pxy[1] > maxy:
             maxy = pxy[1]
     # print(maxy - miny)
-
-    # Detection checks
-    if jump() == True
+    if (maxy - miny > 200):
         print("JUMP")
+	#press('up')
+        pointsG.clear()
     # print(contour)
     # print(points)
 
@@ -131,12 +132,6 @@ if not args.get("video", False):
 	vs.stop()
 else:
 	vs.release()
-
-# Detector functions
-def jump():
-    if (maxy - miny > 200):
-        return True
-        #pointsG.clear()
-
+ 
 # close all windows
 cv2.destroyAllWindows()
