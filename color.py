@@ -57,30 +57,31 @@ def get_angle(point1, point2):
 # check if fingers are leaning for sideways motion
 def lean(boxG, boxR):
     
-    angle = -1
+    angleG = -1
+    angleR = -1
 
     if (len(boxG) == 0 and len(boxR) == 0):
 	return False
 
-    elif (len(boxG) > 0):
+    if (len(boxG) > 0):
 	len1 = get_dist(boxG[0], boxG[1])
 	len2 = get_dist(boxG[1], boxG[2])
 
 	if (len1 > len2):
-	    angle = get_angle(boxG[0], boxG[1])
+	    angleG = get_angle(boxG[0], boxG[1])
 	else:
-	    angle = get_angle(boxG[1], boxG[2])
+	    angleG = get_angle(boxG[1], boxG[2])
     
-    else:
+    if (len(boxR) > 0):
 	len1 = get_dist(boxR[0], boxR[1])
 	len2 = get_dist(boxR[1], boxR[2])
 
 	if (len1 > len2):
-	    angle = get_angle(boxR[0], boxR[1])
+	    angleR = get_angle(boxR[0], boxR[1])
 	else:
-	    angle = get_angle(boxR[1], boxR[2])
+	    angleR = get_angle(boxR[1], boxR[2])
 
-    if (angle == -1 or angle > 0.3):
+    if (angleG > 0.3 or angleR > 0.3):
 	return False
     else:
 	return True
