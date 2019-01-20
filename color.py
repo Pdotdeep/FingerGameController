@@ -9,8 +9,9 @@ import imutils
 import time
 import math
 
-window_frame = 20
+window_frame = 15
 angle_thresh = 0.45
+walk_thresh = 5
 
 
 # Detector functions
@@ -118,6 +119,17 @@ def walk(pointsG, pointsR):
         return False
 
 
+def walk2(pointsG, pointsR):
+    if (len(pointsG) < 2 or len(pointsR) < 2):
+        return False
+    elif ((pointsG[-1][0] - pointsG[-2][0]) > walk_thresh) and ((pointsR[-1][0] - pointsR[-2][0]) < -1*walk_thresh):
+        return True
+    elif ((pointsG[-1][0] - pointsG[-2][0]) < -1*walk_thresh) and ((pointsR[-1][0] - pointsR[-2][0]) > walk_thresh):
+        return True
+    else:
+        return False
+
+
 # define the list of boundaries
 boundaries = [
     ([89, 182, 0], [255, 255, 162])
@@ -146,9 +158,9 @@ while True:
 
     # create NumPy arrays from the boundaries
     lowerG = np.array([ 0, 0, 0], dtype = "uint8")
-    upperG = np.array([255, 115, 255], dtype = "uint8")
+    upperG = np.array([255, 120, 255], dtype = "uint8")
 
-    lowerR = np.array([ 0, 150, 0], dtype = "uint8")
+    lowerR = np.array([ 0, 163, 0], dtype = "uint8")
     upperR = np.array([255, 240, 255], dtype = "uint8")
 
     # check if any contours more than threshold area
@@ -206,19 +218,23 @@ while True:
             boxR = np.int0(boxR)
             cv2.drawContours(frame, [boxR], 0, (0, 0, 255), 2)
         
-        break
+            break
 
-    #if (not foundG):
-        #pointsG = []
-    #if (not foundR):
-        #pointsR = []
+    if (not foundG and  len(pointsG)> 0):
+        pointsG.pop()
+    if (not foundR and  len(pointsR) > 0):
+        pointsR.pop()
 
     # Check finger gesture
 
-    if walk(pointsG, pointsR) :
+    if walk2(pointsG, pointsR) :
         print("walk")
         keyDown('right')
         keyUp('right')
+        if(len(pointsG) > 15):
+            pointsG = pointsG[15:]
+        if(len(pointsR) > 15):
+            pointsR = pointsR[15:]
 
 
     elif jump(pointsG , pointsR) :
