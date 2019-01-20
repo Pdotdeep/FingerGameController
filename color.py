@@ -9,7 +9,7 @@ import imutils
 import time
 import math
 
-window_frame = 15
+window_frame = 20
 angle_thresh = 0.45
 
 
@@ -146,10 +146,10 @@ while True:
 
     # create NumPy arrays from the boundaries
     lowerG = np.array([ 0, 0, 0], dtype = "uint8")
-    upperG = np.array([255, 120, 255], dtype = "uint8")
+    upperG = np.array([255, 115, 255], dtype = "uint8")
 
-    lowerR = np.array([ 0, 163, 0], dtype = "uint8")
-    upperR = np.array([255, 255, 255], dtype = "uint8")
+    lowerR = np.array([ 0, 150, 0], dtype = "uint8")
+    upperR = np.array([255, 240, 255], dtype = "uint8")
 
     # check if any contours more than threshold area
     foundG, foundR = False, False
@@ -208,10 +208,10 @@ while True:
         
         break
 
-    if (not foundG):
-        pointsG = []
-    if (not foundR):
-        pointsR = []
+    #if (not foundG):
+        #pointsG = []
+    #if (not foundR):
+        #pointsR = []
 
     # Check finger gesture
 
@@ -225,12 +225,15 @@ while True:
         pointsG = []
         pointsR = []
         keyDown('up')
+        keyDown('up')
+        keyDown('right')
         keyUp('up')
+        keyUp('right')
 
     elif lean(boxG, boxR):
         print("lean")
         keyDown('left')
-        keyDown('left')
+        keyUp('left')
 
     output = cv2.bitwise_and(frame, frame, mask = maskG)
     output2 = cv2.bitwise_and(frame, frame, mask = maskR)
