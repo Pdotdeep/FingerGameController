@@ -12,7 +12,7 @@ import math
 window_frame = 15
 angle_thresh = 0.45
 walk_thresh = 5
-
+jump_thresh = 15
 
 # Detector functions
 def jump(pointsG , pointsR):
@@ -51,6 +51,17 @@ def jump(pointsG , pointsR):
 
     return False
 
+def jump2(pointsG, pointsR):
+    if (len(pointsG) < 2 or len(pointsR) < 2):
+        return False
+    elif ((pointsG[-1][1] - pointsG[-2][1]) > jump_thresh) and ((pointsR[-1][1] - pointsR[-2][1]) > jump_thresh):
+        return True
+    elif ((pointsG[-1][1] - pointsG[-2][1]) < -1*jump_thresh) and ((pointsR[-1][1] - pointsR[-2][1]) < -1* jump_thresh):
+        return True
+    else:
+        return False
+
+    
 
 def get_dist(point1, point2):
     return (point1[0] - point2[0])**2 + (point1[1] - point2[1])**2
@@ -179,8 +190,8 @@ while True:
     centyG = 0
     centyR = 0
     centxR = 0
-    contoursG , h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
-    contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    _, contoursG, h = cv2.findContours(maskG ,cv2.RETR_EXTERNAL , cv2.CHAIN_APPROX_SIMPLE)
+    _, contoursR, h = cv2.findContours(maskR, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
     for contour in contoursG:
 
@@ -237,14 +248,13 @@ while True:
             pointsR = pointsR[15:]
 
 
-    elif jump(pointsG , pointsR) :
-        pointsG = []
-        pointsR = []
+    elif jump2(pointsG , pointsR) :
         keyDown('up')
         keyDown('up')
         keyDown('right')
         keyUp('up')
         keyUp('right')
+        print("jump")
 
     elif lean(boxG, boxR):
         print("lean")
